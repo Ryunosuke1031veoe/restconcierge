@@ -1,7 +1,13 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  images: {
+    domains: ["lh3.googleusercontent.com"], // Googleプロフィール画像のホスティング先
+  },
+  env: {
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  },
 
-export default nextConfig;
+}
+
+export default nextConfig
