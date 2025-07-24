@@ -22,7 +22,7 @@ export default async function AnalyticsPage() {
   const session = await getServerSession(authOptions)
 
   if (!session) {
-    redirect("/login")
+    redirect("/signin")
   }
 
   return (
