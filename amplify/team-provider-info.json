@@ -1,0 +1,20 @@
+{
+  "prod": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-restconcierge-prod-d0770-authRole",
+      "UnauthRoleArn": "arn:aws:iam::225989378670:role/amplify-restconcierge-prod-d0770-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::225989378670:role/amplify-restconcierge-prod-d0770-authRole",
+      "Region": "ap-northeast-1",
+      "DeploymentBucketName": "amplify-restconcierge-prod-d0770-deployment",
+      "UnauthRoleName": "amplify-restconcierge-prod-d0770-unauthRole",
+      "StackName": "amplify-restconcierge-prod-d0770",
+      "StackId": "arn:aws:cloudformation:ap-northeast-1:225989378670:stack/amplify-restconcierge-prod-d0770/a8dfbc90-68c0-11f0-8572-0637ee4b47cd",
+      "AmplifyAppId": "d3ittvq8lvb93b"
+    },
+    "categories": {
+      "auth": {
+        "restconcierge66a21a7f": {}
+      }
+    }
+  }
+}

@@ -23,6 +23,7 @@
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tabs": "^1.1.12",
     "@stripe/stripe-js": "^7.5.0",
+    "autoprefixer": "^10.4.21",
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -31,15 +32,14 @@
     "next-auth": "^4.24.11",
     "openai": "^5.8.2",
     "papaparse": "^5.5.3",
+    "postcss": "^8.4.31",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^3.0.2",
     "sonner": "^2.0.6",
     "stripe": "^18.3.0",
     "tailwind-merge": "^3.3.1",
-    "tailwindcss": "^3.4.0",
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.4.31"
+    "tailwindcss": "^3.4.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

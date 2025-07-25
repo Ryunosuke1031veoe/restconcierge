@@ -1,8 +1,8 @@
 import type { Metadata } from "next"
 import { Inter, Noto_Sans_JP } from "next/font/google"
 import "./globals.css"
-import NextAuthSessionProvider from "./SessionProvider"
 import { ReactNode } from "react"
+import NextAuthSessionProvider from './SessionProvider'
 
 const inter = Inter({
   variable: "--font-inter",
@@ -35,8 +35,12 @@ export default function RootLayout({
   return (
     <html lang="ja" className={`${inter.variable} ${notoSansJP.variable}`}>
       <body>
-        <NextAuthSessionProvider>{children}</NextAuthSessionProvider>
+        <NextAuthSessionProvider>
+          {children}
+        </NextAuthSessionProvider>
       </body>
     </html>
   )
 }
+
+
