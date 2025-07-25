@@ -1,178 +1,187 @@
 generator client {
-  provider = "prisma-client-js"
-  binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x"]
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x", "rhel-openssl-3.0.x", "linux-arm64-openssl-1.1.x"]
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma" // Aiven推奨設定
 }
 
 model User {
-  id             String            @id @default(cuid())
-  name           String?
-  email          String?           @unique
-  emailVerified  DateTime?
-  image          String?
-  password       String?
-  phone          String?
-  address        String?
-  
-  // プラン関連フィールド
-  planId         String            @default("free")  // basicからfreeに変更
-  planStartDate  DateTime          @default(now())
-  planEndDate    DateTime?
-  isActive       Boolean           @default(true)
-  
-  // 使用量関連
-  monthlyConsultations Int         @default(0)
-  lastConsultationReset DateTime   @default(now())
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  phone         String?
+  address       String?
 
-  // 店舗情報フィールド（新規追加）
-  storeName      String?
-  storeType      String?
-  averageSpend   Int?
-  seats          Int?
-  businessHours  String?
-  challenges     Json?
+  // プラン関連フィールド
+  planId        String    @default("free")
+  planStartDate DateTime  @default(now())
+  planEndDate   DateTime?
+  isActive      Boolean   @default(true)
+
+  // 使用量関連
+  monthlyConsultations  Int      @default(0)
+  lastConsultationReset DateTime @default(now())
+
+  // 店舗情報フィールド
+  storeName              String?
+  storeType              String?
+  averageSpend           Int?
+  seats                  Int?
+  businessHours          String?
+  challenges             Json?
   storeSettingsUpdatedAt DateTime?
-  
-  // Stripe関連フィールド（新規追加）
-  stripeCustomerId     String?       @unique
-  stripeSubscriptionId String?       @unique
-  
-  accounts       Account[]
-  sessions       Session[]
+
+  // Stripe関連フィールド
+  stripeCustomerId     String? @unique
+  stripeSubscriptionId String? @unique
+
+  accounts         Account[]
+  sessions         Session[]
   analyticsResults AnalyticsResult[]
   salesRecords     SalesRecord[]
   chatSessions     ChatSession[]
-  planHistory    PlanHistory[]
-  subscriptions  Subscription[]    // 新規追加
-  
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  planHistory      PlanHistory[]
+  subscriptions    Subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([email])
   @@index([planId])
-  @@index([stripeCustomerId])      // 新規追加
-  @@index([stripeSubscriptionId])  // 新規追加
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+  @@map("users")
 }
 
 model Plan {
-  id                String         @id @default(cuid())
-  name              String         @unique
+  id                String        @id @default(cuid())
+  name              String        @unique
   displayName       String
   price             Float
   consultationLimit Int
   features          Json
-  isActive          Boolean        @default(true)
-  sortOrder         Int            @default(0)
+  isActive          Boolean       @default(true)
+  sortOrder         Int           @default(0)
   planHistory       PlanHistory[]
-  
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([name])
   @@index([isActive])
+  @@map("plans")
 }
 
 model PlanHistory {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  planId        String
-  plan          Plan     @relation(fields: [planId], references: [id])
-  startDate     DateTime
-  endDate       DateTime?
-  price         Float
-  status        String   @default("active") // active, cancelled, expired
-  
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  planId    String
+  plan      Plan      @relation(fields: [planId], references: [id])
+  startDate DateTime
+  endDate   DateTime?
+  price     Float
+  status    String    @default("active") // active, cancelled, expired
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([planId])
   @@index([startDate])
+  @@map("plan_history")
 }
 
-// 新規追加：Stripeサブスクリプション管理テーブル
 model Subscription {
-  id                    String   @id @default(cuid())
-  userId                String
-  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  stripeSubscriptionId  String   @unique
-  stripeCustomerId      String
-  stripePriceId         String
-  
-  planName              String   // 'free', 'basic', 'pro' etc
-  status                String   // 'active', 'canceled', 'incomplete', 'past_due', 'unpaid', 'trialing'
-  
-  currentPeriodStart    DateTime
-  currentPeriodEnd      DateTime
-  
-  cancelAtPeriodEnd     Boolean  @default(false)
-  canceledAt            DateTime?
-  endedAt               DateTime?
-  
-  amount                Float    // 月額料金
-  currency              String   @default("jpy")
-  
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  stripeSubscriptionId String @unique
+  stripeCustomerId     String
+  stripePriceId        String
+
+  planName String // 'free', 'basic', 'pro' etc
+  status   String // 'active', 'canceled', 'incomplete', 'past_due', 'unpaid', 'trialing'
+
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+
+  cancelAtPeriodEnd Boolean   @default(false)
+  canceledAt        DateTime?
+  endedAt           DateTime?
+
+  amount   Float // 月額料金
+  currency String @default("jpy")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([stripeSubscriptionId])
   @@index([status])
   @@index([planName])
+  @@map("subscriptions")
 }
 
 model Account {
-  id                String   @id @default(cuid())
+  id                String  @id @default(cuid())
   userId            String
+  user              User    @relation(fields: [userId], references: [id])
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?  @db.Text
-  access_token      String?  @db.Text
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?  @db.Text
+  id_token          String? @db.Text
   session_state     String?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@map("accounts")
 }
 
 model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
   userId       String
+  user         User     @relation(fields: [userId], references: [id])
   expires      DateTime
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+  @@map("sessions")
 }
 
 model VerificationToken {
+  id         String   @id @default(cuid()) // プライマリキー追加
   identifier String
   token      String   @unique
   expires    DateTime
 
   @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
 model SalesRecord {
   id                String           @id @default(cuid())
   userId            String
-  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date              DateTime         // 日付
-  menuItem          String           // メニュー名
-  quantity          Int              // 数量
-  amount            Float            // 金額（CSVの「金額」列）
-  weather           String           // 天気情報（新規追加）
-  unitPrice         Float            // 単価（amount / quantity）
+  user              User             @relation(fields: [userId], references: [id])
+  date              DateTime // 日付
+  menuItem          String // メニュー名
+  quantity          Int // 数量
+  amount            Float // 金額（CSVの「金額」列）
+  weather           String // 天気情報
+  unitPrice         Float // 単価（amount / quantity）
   analyticsResultId String?
   analyticsResult   AnalyticsResult? @relation(fields: [analyticsResultId], references: [id])
   createdAt         DateTime         @default(now())
@@ -181,40 +190,42 @@ model SalesRecord {
   @@index([userId])
   @@index([date])
   @@index([analyticsResultId])
+  @@map("sales_records")
 }
 
 model AnalyticsResult {
-  id                  String   @id @default(cuid())
-  userId              String
-  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  startDate           DateTime
-  endDate             DateTime
-  totalSales          Float
-  totalOrders         Int
-  averageSpend        Float
-  totalDays           Int
-  dailySales          Json
-  menuSales           Json
-  weatherSales        Json
-  dailyMenuBreakdown  Json
-  aiAnalysis          String?  @db.Text
-  aiAnalysisStatus    String   @default("pending")
-  fileName            String?
-  recordCount         Int
-  salesRecords        SalesRecord[]
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  id                 String        @id @default(cuid())
+  userId             String
+  user               User          @relation(fields: [userId], references: [id])
+  startDate          DateTime
+  endDate            DateTime
+  totalSales         Float
+  totalOrders        Int
+  averageSpend       Float
+  totalDays          Int
+  dailySales         Json
+  menuSales          Json
+  weatherSales       Json
+  dailyMenuBreakdown Json
+  aiAnalysis         String?       @db.Text
+  aiAnalysisStatus   String        @default("pending")
+  fileName           String?
+  recordCount        Int
+  salesRecords       SalesRecord[]
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
 
   @@index([userId])
   @@index([startDate])
   @@index([endDate])
   @@index([createdAt])
+  @@map("analytics_results")
 }
 
 model ChatSession {
   id        String        @id @default(cuid())
   userId    String
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User          @relation(fields: [userId], references: [id])
   title     String?
   messages  ChatMessage[]
   createdAt DateTime      @default(now())
@@ -222,16 +233,18 @@ model ChatSession {
 
   @@index([userId])
   @@index([createdAt])
+  @@map("chat_sessions")
 }
 
 model ChatMessage {
-  id        String       @id @default(cuid())
+  id        String      @id @default(cuid())
   sessionId String
-  session   ChatSession  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  role      String       // 'user' or 'assistant'
-  content   String       @db.Text
-  createdAt DateTime     @default(now())
+  session   ChatSession @relation(fields: [sessionId], references: [id])
+  role      String // 'user' or 'assistant'
+  content   String      @db.Text
+  createdAt DateTime    @default(now())
 
   @@index([sessionId])
   @@index([createdAt])
+  @@map("chat_messages")
 }
