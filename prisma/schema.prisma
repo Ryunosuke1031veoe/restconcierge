@@ -4,9 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider     = "mysql"
-  url          = env("DATABASE_URL")
-  relationMode = "prisma" // Aiven推奨設定
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+  // relationMode = "prisma" を削除してMySQLの標準外部キーを使用
 }
 
 model User {
@@ -82,9 +82,9 @@ model Plan {
 model PlanHistory {
   id        String    @id @default(cuid())
   userId    String
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   planId    String
-  plan      Plan      @relation(fields: [planId], references: [id])
+  plan      Plan      @relation(fields: [planId], references: [id], onDelete: Cascade)
   startDate DateTime
   endDate   DateTime?
   price     Float
@@ -102,7 +102,7 @@ model PlanHistory {
 model Subscription {
   id     String @id @default(cuid())
   userId String
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   stripeSubscriptionId String @unique
   stripeCustomerId     String
@@ -134,7 +134,7 @@ model Subscription {
 model Account {
   id                String  @id @default(cuid())
   userId            String
-  user              User    @relation(fields: [userId], references: [id])
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   type              String
   provider          String
   providerAccountId String
@@ -155,7 +155,7 @@ model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique
   userId       String
-  user         User     @relation(fields: [userId], references: [id])
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expires      DateTime
 
   @@index([userId])
@@ -163,7 +163,7 @@ model Session {
 }
 
 model VerificationToken {
-  id         String   @id @default(cuid()) // プライマリキー追加
+  id         String   @id @default(cuid())
   identifier String
   token      String   @unique
   expires    DateTime
@@ -175,15 +175,15 @@ model VerificationToken {
 model SalesRecord {
   id                String           @id @default(cuid())
   userId            String
-  user              User             @relation(fields: [userId], references: [id])
-  date              DateTime // 日付
-  menuItem          String // メニュー名
-  quantity          Int // 数量
-  amount            Float // 金額（CSVの「金額」列）
-  weather           String // 天気情報
-  unitPrice         Float // 単価（amount / quantity）
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date              DateTime
+  menuItem          String
+  quantity          Int
+  amount            Float
+  weather           String
+  unitPrice         Float
   analyticsResultId String?
-  analyticsResult   AnalyticsResult? @relation(fields: [analyticsResultId], references: [id])
+  analyticsResult   AnalyticsResult? @relation(fields: [analyticsResultId], references: [id], onDelete: SetNull)
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
@@ -196,7 +196,7 @@ model SalesRecord {
 model AnalyticsResult {
   id                 String        @id @default(cuid())
   userId             String
-  user               User          @relation(fields: [userId], references: [id])
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   startDate          DateTime
   endDate            DateTime
   totalSales         Float
@@ -225,7 +225,7 @@ model AnalyticsResult {
 model ChatSession {
   id        String        @id @default(cuid())
   userId    String
-  user      User          @relation(fields: [userId], references: [id])
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String?
   messages  ChatMessage[]
   createdAt DateTime      @default(now())
@@ -239,8 +239,8 @@ model ChatSession {
 model ChatMessage {
   id        String      @id @default(cuid())
   sessionId String
-  session   ChatSession @relation(fields: [sessionId], references: [id])
-  role      String // 'user' or 'assistant'
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role      String
   content   String      @db.Text
   createdAt DateTime    @default(now())
 
