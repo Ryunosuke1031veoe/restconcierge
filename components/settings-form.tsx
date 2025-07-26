@@ -1,7 +1,8 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
+import { useSession } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Save, Store, Clock, Users, DollarSign, AlertCircle, Crown, MessageCircle, Calendar, Check, Loader2, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -48,6 +49,9 @@ interface StoreSettingsData {
 }
 
 export default function SettingsForm() {
+  const { data: session, status } = useSession()
+  const router = useRouter()
+  
   const [formData, setFormData] = useState<StoreSettingsData>({
     storeName: "",
     storeType: "",
@@ -64,17 +68,44 @@ export default function SettingsForm() {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
+  // 認証チェック
   useEffect(() => {
-    loadStoreSettings()
-  }, [])
+    if (status === "loading") return // まだ認証状態を確認中
+
+    if (status === "unauthenticated") {
+      console.log("未ログイン状態のため、新規登録ページにリダイレクト")
+      router.push("/register")
+      return
+    }
+
+    // ログイン済みの場合のみデータを読み込み
+    if (status === "authenticated") {
+      loadStoreSettings()
+    }
+  }, [status, router])
 
   const loadStoreSettings = async () => {
+    if (!session) {
+      console.log("セッション情報がないため、データ読み込みをスキップ")
+      return
+    }
+
     try {
       setIsLoading(true)
       const response = await fetch('/api/user/store-settings')
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.log("認証エラー - 新規登録ページにリダイレクト")
+          router.push("/register")
+          return
+        }
+        throw new Error(`API Error: ${response.status} ${response.statusText}`)
+      }
+
       const result = await response.json()
 
-      if (response.ok && result.success) {
+      if (result.success) {
         const { data } = result
         setFormData({
           storeName: data.storeName || "",
@@ -95,6 +126,14 @@ export default function SettingsForm() {
       }
     } catch (error) {
       console.error('設定読み込みエラー:', error)
+      
+      // 401エラーの場合は新規登録ページにリダイレクト
+      if (error instanceof Error && error.message.includes('401')) {
+        console.log("401エラーのため、新規登録ページにリダイレクト")
+        router.push("/register")
+        return
+      }
+      
       setError('設定の読み込み中にエラーが発生しました')
     } finally {
       setIsLoading(false)
@@ -149,6 +188,8 @@ export default function SettingsForm() {
   }
 
   const handleSave = async () => {
+    if (!session) return
+
     const validationError = validateForm()
     if (validationError) {
       setError(validationError)
@@ -178,9 +219,17 @@ export default function SettingsForm() {
         body: JSON.stringify(requestData),
       })
 
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.push("/register")
+          return
+        }
+        throw new Error(`API Error: ${response.status}`)
+      }
+
       const result = await response.json()
 
-      if (response.ok && result.success) {
+      if (result.success) {
         setSuccessMessage(result.message)
         setLastUpdated(result.data.lastUpdated)
         setIsFirstTime(false)
@@ -203,6 +252,8 @@ export default function SettingsForm() {
   }
 
   const handleReset = async () => {
+    if (!session) return
+    
     if (!confirm('店舗設定をリセットしますか？この操作は取り消せません。')) {
       return
     }
@@ -212,9 +263,17 @@ export default function SettingsForm() {
         method: 'DELETE',
       })
 
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.push("/register")
+          return
+        }
+        throw new Error(`API Error: ${response.status}`)
+      }
+
       const result = await response.json()
 
-      if (response.ok && result.success) {
+      if (result.success) {
         setFormData({
           storeName: "",
           storeType: "",
@@ -235,6 +294,34 @@ export default function SettingsForm() {
     }
   }
 
+  // 認証状態チェック中
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-teal-600 mx-auto mb-4" />
+          <p className="text-gray-600">認証状態を確認中...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // 未ログインの場合（通常はリダイレクトされるが念のため）
+  if (status === "unauthenticated") {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-gray-600 mb-4">ログインが必要です</p>
+          <Button onClick={() => router.push("/register")}>
+            新規登録
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // データ読み込み中
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -454,7 +541,7 @@ export default function SettingsForm() {
               ) : (
                 <>
                   <Save className="w-5 h-5 mr-2" />
-                  {isFirstTime ? '設定を完了' : '設定を更新'}
+                  {isFirstTime ? '設定を完了' : '設定を保存'}
                 </>
               )}
             </Button>
