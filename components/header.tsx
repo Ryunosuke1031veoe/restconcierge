@@ -16,7 +16,7 @@ import Link from "next/link"
 const navigationItems = [
   { name: "ホーム", href: "/", icon: Home },
   { name: "チャット", href: "/chat", icon: MessageCircle },
-  { name: "設定", href: "/settings", icon: Settings },
+  { name: "店舗設定", href: "/settings", icon: Settings },
   { name: "履歴", href: "/history", icon: History },
   { name: "分析", href: "/analytics", icon: BarChart3 },
 ]
