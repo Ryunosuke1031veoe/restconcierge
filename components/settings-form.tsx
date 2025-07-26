@@ -74,7 +74,7 @@ export default function SettingsForm() {
 
     if (status === "unauthenticated") {
       console.log("未ログイン状態のため、新規登録ページにリダイレクト")
-      router.push("/register")
+      router.push("/signin")
       return
     }
 
@@ -97,7 +97,7 @@ export default function SettingsForm() {
       if (!response.ok) {
         if (response.status === 401) {
           console.log("認証エラー - 新規登録ページにリダイレクト")
-          router.push("/signin")
+          router.push("/register")
           return
         }
         throw new Error(`API Error: ${response.status} ${response.statusText}`)
