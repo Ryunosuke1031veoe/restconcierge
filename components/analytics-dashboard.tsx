@@ -1,8 +1,8 @@
-
 "use client"
 
 import type React from "react"
 import { useState, useMemo } from "react"
+import Link from "next/link"
 import {
   Upload,
   FileText,
@@ -1046,10 +1046,10 @@ ${analysis.weatherSales.map((w) => `${w.weather}: ¥${w.sales.toLocaleString()}`
                     基本的な分析データはご利用いただけます。より詳細なAI分析と改善提案をご希望の場合は、プランをアップグレードしてください。
                   </p>
                   <Link href="/profile">
-                        <Button className="bg-purple-600 hover:bg-purple-700 text-white">
-                            <Crown className="w-4 h-4 mr-2" />
-                                  プランをアップグレード
-                          </Button>
+                    <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+                      <Crown className="w-4 h-4 mr-2" />
+                      プランをアップグレード
+                    </Button>
                   </Link>
                   <div className="mt-4 text-sm text-purple-600">
                     <p className="font-medium">プレミアムプランの特典：</p>
